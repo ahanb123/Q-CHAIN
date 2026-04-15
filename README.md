@@ -95,6 +95,20 @@ Professor Travis Mayberry, Cyber Science Department, United States Naval Academy
 
 This project was developed as part of academic research within the USNA Cyber Science Department. Generative AI was utilized as an approved tool for pair-programming, research, and structural formatting.
 
+---
+
+## Citation
+ 
+If you use this code in your research, please cite:
+ 
+```bibtex
+@misc{quantum-digital-signatures,
+  title={Q-CHAIN},
+  author={Ahan Bhattacharyya},
+  year={2026},
+  url={https://github.com/yourusername/Q-CHAIN}
+}
+```
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
