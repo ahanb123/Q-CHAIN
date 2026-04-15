@@ -106,7 +106,7 @@ If you use this code in your research, please cite:
   title={Q-CHAIN},
   author={Ahan Bhattacharyya},
   year={2026},
-  url={https://github.com/yourusername/Q-CHAIN}
+  url={https://github.com/ahanb123/Q-CHAIN}
 }
 ```
 ## License
