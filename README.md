@@ -51,33 +51,72 @@ pip install qunetsim
 
 ## Running the Simulation
 
-This repository contains a single, self-contained simulation script. To run the hybrid quantum-classical signature protocol, execute:
+To see the basic two node demo between Alice and Bob, run:
 
 ```bash
-python qchain_sim.py
+python qchain_basic_demo.py
+```
+
+To see the eavesdropper demo that adds Eve, run:
+
+```bash
+python qchain_eavesdropper_demo.py
 ```
 
 ---
 
 ## Expected Output
+Expected Output
+When executed, the scripts simulate a post-quantum network environment. The terminal will log the chronological protocol execution, detailing the AGCD key generation, the classical Hash-then-Sign subset-sum process, the quantum encoding, and the final verification math.
 
-When executed, the script simulates two quantum network hosts (Alice and Bob). The output logs the chronological protocol execution:
+1. Normal Transmission (main.py)
+In a secure environment, Alice and Bob successfully establish a quantum channel and verify the transaction. A successful run will conclude with the following terminal output:
 
-Bob generates the AGCD signature keypair and shares the public verification key.
-Alice classically signs a sample blockchain transaction ("Transfer 100 BTC from Alice to Bob") using the hybrid subset-sum protocol.
-Alice encodes the signature into a qubit state and teleports it to Bob via EPR pairs.
-Bob receives the state, decodes it, and validates the signature against the hash.
+```text
+================================================================================
+HYBRID QUANTUM-CLASSICAL DIGITAL SIGNATURE - FINAL RESULTS
+================================================================================
+Transaction: 'Transfer 100 BTC from Alice to Bob'
+SHA-256 Hash: 8b4a3f8b... [truncated for readability]
 
-A successful run will conclude with the following terminal output:
+Signing Key (p): 5883 (12 bits)
+Verification Key: 5 Enc(0) samples
+  Sample values: [47385, 12847, 94833]...
 
-```bash
---- Simulation Results ---
-Transaction: Transfer 100 BTC from Alice to Bob
 Signature Size: 32 components
-Verification Result: Success
+Transmission: DIRECT QUANTUM CHANNEL
+
+================================================================================
+SUCCESS: DIGITAL SIGNATURE VERIFIED
+Blockchain transaction authenticated via hybrid quantum system
+================================================================================
 ```
 
----
+2. Eavesdropper Detection (eavesdropper.py)
+In the eavesdropping model, Eve actively intercepts the transmission. Because her active quantum sniffer forces an immediate wave-function collapse (No-Cloning Theorem), Bob receives corrupted data. The script will catch this mathematical failure and trigger the tamper-evident alarm:
+
+```text
+================================================================================
+HYBRID QUANTUM-CLASSICAL DIGITAL SIGNATURE - FINAL RESULTS
+================================================================================
+Transaction: 'Transfer 100 BTC from Alice to Bob'
+SHA-256 Hash: 8b4a3f8b... [truncated for readability]
+
+Signing Key (p): 7499 (12 bits)
+Verification Key: 5 Enc(0) samples
+  Sample values: [83944, 29485, 11048]...
+
+Signature Size: 32 components
+Transmission: DIRECT QUANTUM CHANNEL (Routed via Eve)
+
+[Security Event] Eve intercepted and measured 256 qubits.
+
+================================================================================
+FAILURE: Signature verification failed
+TAMPER EVIDENCE DEMONSTRATED: Eavesdropping collapsed the quantum state,
+destroying the signature before Bob could authenticate the transaction.
+================================================================================
+```
 
 ## Security Properties
 - Post-Quantum Resistance: AGCD encryption is resistant to Shor's algorithm.
@@ -88,12 +127,13 @@ Verification Result: Success
 
 ## Author & Acknowledgements
 
-Author: 2/C Ahan Bhattacharyya
+Authors: 
+- MIDN 2/C Ahan Bhattacharyya, Cyber Science Department, United States Naval Academy
+- Dr. Travis Mayberry, Cyber Science Department, United States Naval Academy
 
-Advisors/Mentors:
-Professor Travis Mayberry, Cyber Science Department, United States Naval Academy
 
-This project was developed as part of academic research within the USNA Cyber Science Department. Generative AI was utilized as an approved tool for pair-programming, research, and structural formatting.
+Acknowledgements:
+- This project was developed as part of academic research within the USNA Cyber Science Department. Generative AI was utilized as an approved tool for pair-programming, research, and structural formatting.
 
 ---
 
