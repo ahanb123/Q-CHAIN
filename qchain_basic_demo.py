@@ -103,15 +103,14 @@ def generate_large_prime(bit_length):
             return candidate
 
 
-def generate_enc_zero(p, n, q_bit_length=10, r_bit_length=8):
+def generate_enc_zero(p, q_bit_length=10, r_bit_length=8):
     """
-    Generate encrypted zero: Enc(0) = p*q + 2^n*r
+    Generate encrypted zero: Enc(0) = p*q + 2*r
     
     This forms the basis of the approximate GCD signature scheme.
     
     Args:
         p: Prime number (signing key)
-        n: Message space parameter
         q_bit_length: Bit length of random multiplier q
         r_bit_length: Bit length of random noise r
     
@@ -121,21 +120,22 @@ def generate_enc_zero(p, n, q_bit_length=10, r_bit_length=8):
     q = random.getrandbits(q_bit_length)
     if q == 0:
         q = 1
+        
     r = random.getrandbits(r_bit_length)
     if r == 0:
         r = 1
     
-    enc_zero = p * q + (2**n) * r
+    # c_i = (p * q) + (2 * r)
+    enc_zero = (p * q) + (2 * r) 
     return enc_zero
 
 
-def generate_public_key(p, n, num_enc_zeros=5, q_bit_length=10, r_bit_length=8):
+def generate_public_key(p, num_enc_zeros=5, q_bit_length=10, r_bit_length=8):
     """
     Generate public verification key as list of Enc(0) values.
     
     Args:
         p: Prime number (signing key)
-        n: Message space parameter
         num_enc_zeros: Number of Enc(0) samples to generate
         q_bit_length: Bit length for q parameter
         r_bit_length: Bit length for r parameter
@@ -146,7 +146,7 @@ def generate_public_key(p, n, num_enc_zeros=5, q_bit_length=10, r_bit_length=8):
     public_key = []
     
     for i in range(num_enc_zeros):
-        enc_zero = generate_enc_zero(p, n, q_bit_length, r_bit_length)
+        enc_zero = generate_enc_zero(p, q_bit_length, r_bit_length)
         public_key.append(enc_zero)
     
     print(f"[KeyGen] Generated {num_enc_zeros} Enc(0) values for verification key")
@@ -155,24 +155,22 @@ def generate_public_key(p, n, num_enc_zeros=5, q_bit_length=10, r_bit_length=8):
     return public_key
 
 
-def generate_signature_keypair(p_bit_length=12, n=1, num_enc_zeros=5):
+def generate_signature_keypair(p_bit_length=12, num_enc_zeros=5):
     """
     Generate signature key pair.
     
     Args:
         p_bit_length: Bit length of prime p (signing key)
-        n: Message space parameter (must be 1 for bit signatures)
         num_enc_zeros: Number of Enc(0) samples in verification key
     
     Returns:
-        tuple: (public_key, private_key) where private_key is (p, n)
+        tuple: (public_key, private_key) where private_key is p
     """
     p = generate_large_prime(p_bit_length)
     print(f"[KeyGen] Generated signing key p = {p} ({p.bit_length()} bits)")
-    print(f"[KeyGen] Signature space: 2^{n} = {2**n}")
     
-    public_key = generate_public_key(p, n, num_enc_zeros)
-    private_key = (p, n)
+    public_key = generate_public_key(p, num_enc_zeros)
+    private_key = p  # The private key is simply the prime trapdoor
     
     return public_key, private_key
 
@@ -194,18 +192,18 @@ def sign_hash_bit(hash_bit, private_key, num_to_select=2):
     
     Args:
         hash_bit: Single bit to sign (0 or 1)
-        private_key: Tuple (p, n) containing signing key
+        private_key: The prime trapdoor p
         num_to_select: Number of fresh Enc(0) values to generate
     
     Returns:
         int: Signature component for this hash bit
     """
-    p, n = private_key
+    p = private_key
     
     # Generate fresh Enc(0) values for this signature component
     fresh_enc_zeros = []
     for _ in range(num_to_select):
-        enc_zero = generate_enc_zero(p, n)
+        enc_zero = generate_enc_zero(p)
         fresh_enc_zeros.append(enc_zero)
     
     # Classical addition
@@ -226,15 +224,13 @@ def sign_message(message, private_key, num_to_select=2, truncate_bits=8):
     
     Args:
         message: Message to sign
-        private_key: Tuple (p, n) containing signing key
+        private_key: The prime trapdoor p
         num_to_select: Number of Enc(0) values per hash bit
         truncate_bits: Number of hash bits to sign (8-256)
     
     Returns:
         tuple: (signature, hash_bytes) where signature is list of components
     """
-    p, n = private_key
-    
     hash_bytes, hash_bits = hash_message(message)
     hash_bits = hash_bits[:truncate_bits]
     
@@ -274,13 +270,13 @@ def verify_signature(message, signature, public_key, private_key, truncate_bits=
         message: Original message
         signature: List of signature components
         public_key: Verification key (Enc(0) values)
-        private_key: Tuple (p, n) - securely transmitted
+        private_key: The prime trapdoor p
         truncate_bits: Must match signing truncation
     
     Returns:
         bool: True if signature is valid
     """
-    p, n = private_key
+    p = private_key
     
     hash_bytes, hash_bits = hash_message(message)
     hash_bits = hash_bits[:truncate_bits]
@@ -297,8 +293,8 @@ def verify_signature(message, signature, public_key, private_key, truncate_bits=
     for i, expected_bit_char in enumerate(hash_bits):
         expected_bit = int(expected_bit_char)
         
-        # Recover bit: (sig_component mod p) mod 2^n
-        recovered_bit = (signature[i] % p) % (2**n)
+        # Recover bit: (sig_component mod p) mod 2 (Matches paper exactly)
+        recovered_bit = (signature[i] % p) % 2
         
         if recovered_bit != expected_bit:
             print(f"[Verification] FAILED at bit {i}")
@@ -395,12 +391,12 @@ def alice_protocol_signature(host, transaction, results):
         parts = key_content.split(':')
         public_key_str = parts[1]
         public_key = [int(x) for x in public_key_str.split(',')]
-        n = int(parts[2])
-        p = int(parts[3])
-        num_to_select = int(parts[4])
-        truncate_bits = int(parts[5])
         
-        private_key = (p, n)
+        p = int(parts[2])
+        num_to_select = int(parts[3])
+        truncate_bits = int(parts[4])
+        
+        private_key = p
         
         print(f"[Alice] Received verification key: {len(public_key)} values")
         print(f"[Alice] Received signing key p (via authenticated channel)")
@@ -484,19 +480,18 @@ def bob_protocol_signature(host, results):
     print("[Bob] Generating signature key pair...")
     
     p_bit_length = 12
-    n = 1
     num_enc_zeros = 5
     num_to_select = 2
     truncate_bits = 32
     
-    public_key, private_key = generate_signature_keypair(p_bit_length, n, num_enc_zeros)
+    public_key, private_key = generate_signature_keypair(p_bit_length, num_enc_zeros)
     results['keys'] = (public_key, private_key)
     
     # Share keys with Alice
-    p, n = private_key
+    p = private_key
     public_key_str = ','.join(map(str, public_key))
     host.send_classical('Alice', 
-                       f"VERIFICATION_KEY:{public_key_str}:{n}:{p}:{num_to_select}:{truncate_bits}", 
+                       f"VERIFICATION_KEY:{public_key_str}:{p}:{num_to_select}:{truncate_bits}", 
                        await_ack=True)
     time.sleep(0.2)
     
@@ -627,7 +622,7 @@ def main():
         
         # Display results
         public_key, private_key = results['keys']
-        p, n = private_key
+        p = private_key
         original_signature = results['signature']
         verification_result = results['verification_result']
         hash_value = results['hash_value']
