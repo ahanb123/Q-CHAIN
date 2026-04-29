@@ -1,7 +1,7 @@
 # Q-CHAIN
 **Quantum Cryptographic Hash and Authentication Identity Network**
 
-> 📄 **Read the full academic paper:** [Insert Link to PDF/Paper Here]
+> 📄 **Read the full academic paper:** [Q-CHAIN: A Hybrid Quantum-Classical Identity Framework for Securing Decentralized Ledgers](Q-CHAIN_Paper.pdf)
 
 Q-CHAIN is a Proof-of-Concept (PoC) simulation of a Quantum Blockchain Identity Framework designed to secure decentralized ledgers in the post-quantum era. This repository contains the QuNetSim implementation of the Q-CHAIN hybrid architecture.
 
